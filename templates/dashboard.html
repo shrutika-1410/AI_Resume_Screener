@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h2>Candidate Dashboard</h2>
+
+<table border="1">
+
+<tr>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Skills</th>
+    <th>Score</th>
+</tr>
+
+{% for c in candidates %}
+
+<tr>
+    <td>{{ c.name }}</td>
+    <td>{{ c.email }}</td>
+    <td>{{ c.skills }}</td>
+    <td>{{ c.score }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>

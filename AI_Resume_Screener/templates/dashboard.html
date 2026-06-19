@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="grid">
+  <div class="card">
+    <div class="card-h">
+      <div>
+        <div class="title">ATS Screening</div>
+        <div class="subtitle">Candidates • Skills extraction • Job match</div>
+      </div>
+      <span class="tag">AstraATS</span>
+    </div>
+    <div class="card-b">
+      <div class="small" style="margin-bottom:12px;">
+        Upload a resume to generate an ATS-style candidate score and role recommendations.
+      </div>
+      <a class="btn" href="/">Upload another</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div>
+        <div class="title">Screening Summary</div>
+        <div class="subtitle">Quick stats from your last upload(s)</div>
+      </div>
+    </div>
+    <div class="card-b">
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div class="rec" style="flex:1; min-width:180px;">
+          <div class="rec-title">Candidates</div>
+          <div class="rec-meta" style="font-size:22px; font-weight:900; color:var(--text)">{{ candidates|length }}</div>
+        </div>
+        <div class="rec" style="flex:1; min-width:180px;">
+          <div class="rec-title">Top score</div>
+          {% if candidates %}
+            <div class="rec-meta" style="font-size:22px; font-weight:900; color:var(--text)">{{ candidates[0].score }}</div>
+          {% else %}
+            <div class="rec-meta">—</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <div class="card-h">
+    <div>
+      <div class="title">Candidates</div>
+      <div class="subtitle">Role fit is calculated using extracted skill overlap</div>
+    </div>
+  </div>
+
+  <div class="card-b">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:18%">Candidate</th>
+          <th style="width:28%">Skills</th>
+          <th style="width:14%">ATS Score</th>
+          <th style="width:40%">Recommended roles</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in candidates %}
+        <tr>
+          <td>
+            <div style="font-weight:900">{{ c.name }}</div>
+            <div class="small">{{ c.email }}</div>
+          </td>
+          <td>
+            {% if c.skills %}
+              <div style="display:flex; flex-wrap:wrap; gap:8px">
+                {% for s in c.skills.split(',') %}
+                  {% if s|trim %}
+                    <span class="tag">{{ s|trim }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="small">No skills detected</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="score">{{ c.score }}</div>
+          </td>
+          <td>
+            {% if c.job_recommendations %}
+              <ul class="rec-list">
+                {% for j in c.job_recommendations %}
+                  <li class="rec">
+                    <div class="rec-title">{{ j.title }}</div>
+                    <div class="rec-meta">{{ j.match_pct }}% match</div>
+                    {% if j.matched_skills %}
+                      <div class="rec-meta">Matched: {{ j.matched_skills }}</div>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <span class="small">No recommendations available</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+

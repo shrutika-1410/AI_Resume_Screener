@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="grid">
+  <div class="card">
+    <div class="card-h">
+      <div>
+        <div class="title">Screen candidates</div>
+        <div class="subtitle">Upload a resume and get skills + top job recommendations.</div>
+      </div>
+      <span class="tag">Modern ATS UI</span>
+    </div>
+
+    <div class="card-b">
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" name="name" placeholder="e.g., Priya Sharma" required />
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="e.g., priya@email.com" required />
+        </div>
+
+        <div class="field">
+          <label>Resume file</label>
+          <input type="file" name="resume" accept=".txt,.pdf,.doc,.docx" required />
+          <div class="small" style="margin-top:8px;">
+            Supported: .txt, .pdf, .doc, .docx (your current parser handles text extraction).
+          </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%; margin-top:8px;">
+          <span>Run AI Screening</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div>
+        <div class="title">What you get</div>
+        <div class="subtitle">A professional, interview-ready output.</div>
+      </div>
+    </div>
+    <div class="card-b">
+      <ul class="rec-list">
+        <li class="rec">
+          <div class="rec-title">Skills extracted</div>
+          <div class="rec-meta">Detected keywords from your resume text.</div>
+        </li>
+        <li class="rec">
+          <div class="rec-title">ATS score</div>
+          <div class="rec-meta">Currently: number of extracted skills × 10.</div>
+        </li>
+        <li class="rec">
+          <div class="rec-title">Job recommendations</div>
+          <div class="rec-meta">Match % based on required skills overlap.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
