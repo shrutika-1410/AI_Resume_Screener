@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
 import os
 
+# Load environment variables
 load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DB_HOST = os.getenv("DB_HOST")
@@ -10,7 +12,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 from flask import Flask, render_template, request
-import os
 
 from nlp.parser import extract_text
 from nlp.skill_extractor import extract_skills
@@ -18,71 +19,114 @@ from nlp.jobs import JOBS
 
 app = Flask(__name__)
 
+# Upload folder setup
 UPLOAD_FOLDER = "uploads"
-
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# Create uploads folder when app starts
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 candidates = []
 
-@app.route('/')
+
+@app.route("/")
 def home():
     return render_template("upload.html")
 
 
-@app.route('/upload', methods=['POST'])
+@app.route("/upload", methods=["POST"])
 def upload():
+    try:
+        print("=== Upload route reached ===")
 
-    name = request.form['name']
-    email = request.form['email']
+        # Form fields
+        name = request.form.get("name", "")
+        email = request.form.get("email", "")
 
-    file = request.files['resume']
+        print("Name:", name)
+        print("Email:", email)
 
-    filepath = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        file.filename
-    )
+        # File upload
+        file = request.files.get("resume")
 
-    file.save(filepath)
+        if not file:
+            return "No file uploaded", 400
 
-    text = extract_text(filepath)
+        filename = file.filename
 
-    skills = extract_skills(text)
+        if filename == "":
+            return "No file selected", 400
 
-    score = len(skills) * 10
+        print("Creating uploads folder")
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Job recommendations based on skill overlap
-    job_recommendations = []
-    resume_skill_set = set(skills)
-    for job in JOBS:
-        required = job.get("required_skills", [])
-        required_set = set(required)
-        matched = sorted(required_set.intersection(resume_skill_set))
-        match_count = len(matched)
-        required_count = len(required_set) if required_set else 1
-        match_pct = int(round((match_count / required_count) * 100))
-        job_recommendations.append(
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+        print("Saving file to:", filepath)
+        file.save(filepath)
+        print("File saved successfully")
+
+        # Extract text
+        print("Extracting text...")
+        text = extract_text(filepath)
+
+        print("Extracting skills...")
+        skills = extract_skills(text)
+
+        score = len(skills) * 10
+
+        # Job recommendations
+        job_recommendations = []
+
+        resume_skill_set = set(skills)
+
+        for job in JOBS:
+            required = job.get("required_skills", [])
+            required_set = set(required)
+
+            matched = sorted(required_set.intersection(resume_skill_set))
+
+            match_count = len(matched)
+            required_count = len(required_set) if required_set else 1
+
+            match_pct = int(round((match_count / required_count) * 100))
+
+            job_recommendations.append(
+                {
+                    "title": job.get("title", "Job"),
+                    "match_pct": match_pct,
+                    "matched_skills": ", ".join(matched),
+                    "required_skills": ", ".join(required),
+                }
+            )
+
+        job_recommendations = sorted(
+            job_recommendations,
+            key=lambda x: x["match_pct"],
+            reverse=True
+        )[:3]
+
+        candidates.append(
             {
-                "title": job.get("title", "Job"),
-                "match_pct": match_pct,
-                "matched_skills": ", ".join(matched),
-                "required_skills": ", ".join(required),
+                "name": name,
+                "email": email,
+                "skills": ", ".join(skills),
+                "score": score,
+                "job_recommendations": job_recommendations,
             }
         )
 
-    job_recommendations = sorted(job_recommendations, key=lambda x: x["match_pct"], reverse=True)[:3]
+        print("Rendering dashboard")
 
-    candidates.append({
-        "name": name,
-        "email": email,
-        "skills": ", ".join(skills),
-        "score": score,
-        "job_recommendations": job_recommendations,
-    })
+        return render_template(
+            "dashboard.html",
+            candidates=candidates
+        )
 
-    return render_template(
-        "dashboard.html",
-        candidates=candidates
-    )
+    except Exception as e:
+        print("ERROR:", str(e))
+        raise
+
 
 if __name__ == "__main__":
     app.run(debug=True)
