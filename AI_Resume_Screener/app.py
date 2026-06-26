@@ -4,12 +4,7 @@ import os
 # Load environment variables
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
 
 from flask import Flask, render_template, request
 
@@ -18,15 +13,24 @@ from nlp.skill_extractor import extract_skills
 from nlp.jobs import JOBS
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = SECRET_KEY
 
 # Upload folder setup
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx", ".doc"}
+
 # Create uploads folder when app starts
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 candidates = []
+
+
+def allowed_file(filename: str) -> bool:
+    _, ext = os.path.splitext(filename)
+    return ext.lower() in ALLOWED_EXTENSIONS
 
 
 @app.route("/")
@@ -40,8 +44,13 @@ def upload():
         print("=== Upload route reached ===")
 
         # Form fields
-        name = request.form.get("name", "")
-        email = request.form.get("email", "")
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+
+        if not name:
+            return "Name is required", 400
+        if not email:
+            return "Email is required", 400
 
         print("Name:", name)
         print("Email:", email)
@@ -57,6 +66,12 @@ def upload():
         if filename == "":
             return "No file selected", 400
 
+        if not allowed_file(filename):
+            return (
+                f"Unsupported file type. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+                400,
+            )
+
         print("Creating uploads folder")
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -69,6 +84,14 @@ def upload():
         # Extract text
         print("Extracting text...")
         text = extract_text(filepath)
+
+        if not text.strip():
+            # Clean up the uploaded file if no text was extracted
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass
+            return "Could not extract any text from the uploaded file. Please try a different format.", 400
 
         print("Extracting skills...")
         skills = extract_skills(text)
@@ -125,7 +148,7 @@ def upload():
 
     except Exception as e:
         print("ERROR:", str(e))
-        raise
+        return f"An error occurred: {str(e)}", 500
 
 
 if __name__ == "__main__":

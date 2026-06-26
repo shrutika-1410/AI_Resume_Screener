@@ -2,13 +2,35 @@ import re
 from pathlib import Path
 
 
+def extract_text_from_pdf(filepath: str) -> str:
+    """Extract text from a PDF file using PyMuPDF."""
+    import fitz
+
+    doc = fitz.open(filepath)
+    pages = []
+    for page in doc:
+        pages.append(page.get_text())
+    doc.close()
+    return "\n".join(pages)
+
+
+def extract_text_from_docx(filepath: str) -> str:
+    """Extract text from a DOCX file using python-docx."""
+    from docx import Document
+
+    doc = Document(filepath)
+    paragraphs = [p.text for p in doc.paragraphs]
+    return "\n".join(paragraphs)
+
+
 def extract_text(filepath: str) -> str:
     """Extract plain text from a resume file.
 
-    Current implementation supports plain text (.txt) and falls back to
-    a best-effort utf-8 read for any other file type.
-
-    If you add PDF/DOCX support later, keep this function signature.
+    Supports:
+      - .txt   : plain text
+      - .pdf   : PDF via PyMuPDF
+      - .docx  : Word documents via python-docx
+      - .doc   : Older Word format (best-effort via python-docx, may fail)
     """
 
     path = Path(filepath)
@@ -17,8 +39,19 @@ def extract_text(filepath: str) -> str:
 
     suffix = path.suffix.lower()
 
-    # Simple support for .txt and best-effort read otherwise.
-    # (This project currently had an empty parser.py, which breaks imports.)
+    if suffix == ".pdf":
+        return extract_text_from_pdf(filepath)
+    elif suffix == ".docx":
+        return extract_text_from_docx(filepath)
+    elif suffix == ".doc":
+        # Best-effort: python-docx sometimes handles .doc (if it's actually docx format)
+        try:
+            return extract_text_from_docx(filepath)
+        except Exception:
+            # Fallback to raw text read
+            pass
+
+    # .txt or fallback
     try:
         raw = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
