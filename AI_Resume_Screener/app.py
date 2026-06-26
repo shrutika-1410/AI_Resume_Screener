@@ -11,6 +11,7 @@ from flask import Flask, render_template, request
 from nlp.parser import extract_text
 from nlp.skill_extractor import extract_skills
 from nlp.jobs import JOBS
+from nlp.database import init_db, insert_candidate, get_all_candidates
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = SECRET_KEY
@@ -22,10 +23,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx", ".doc"}
 
-# Create uploads folder when app starts
+# Create folders when app starts
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-candidates = []
+init_db()
 
 
 def allowed_file(filename: str) -> bool:
@@ -129,15 +129,15 @@ def upload():
             reverse=True
         )[:3]
 
-        candidates.append(
-            {
-                "name": name,
-                "email": email,
-                "skills": ", ".join(skills),
-                "score": score,
-                "job_recommendations": job_recommendations,
-            }
+        insert_candidate(
+            name=name,
+            email=email,
+            skills=", ".join(skills),
+            score=score,
+            job_recommendations=job_recommendations,
         )
+
+        candidates = get_all_candidates()
 
         print("Rendering dashboard")
 

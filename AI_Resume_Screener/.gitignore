@@ -23,3 +23,4 @@ sample_resume.txt
 # OS
 .DS_Store
 Thumbs.db
+candidates.db
