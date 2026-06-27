@@ -83,7 +83,48 @@
             {% endif %}
           </td>
           <td>
-            <div class="score">{{ c.score }}</div>
+            <div class="score">{{ c.ats_score if c.ats_score is defined else c.score }} / 100</div>
+            {% if c.ats_breakdown %}
+              <ul class="rec-list" style="margin-top:10px;">
+                <li class="rec" style="margin-top:0; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Skills Match {{ c.ats_breakdown.skills_match }}/30
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Experience {{ c.ats_breakdown.experience }}/20
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Education {{ c.ats_breakdown.education }}/10
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Projects {{ c.ats_breakdown.projects }}/15
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ ATS Formatting {{ c.ats_breakdown.ats_formatting }}/10
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Keywords {{ c.ats_breakdown.keywords }}/10
+                  </div>
+                </li>
+                <li class="rec" style="margin-top:8px; padding:8px 10px;">
+                  <div class="rec-meta" style="font-size:12px; margin:0;">
+                    ✓ Certifications {{ c.ats_breakdown.certifications }}/5
+                  </div>
+                </li>
+              </ul>
+            {% else %}
+              <div class="small" style="margin-top:8px;">No ATS breakdown available</div>
+            {% endif %}
           </td>
           <td>
             {% if c.job_recommendations %}

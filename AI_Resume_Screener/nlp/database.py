@@ -20,12 +20,14 @@ def init_db() -> None:
     """Create the candidates table if it doesn't exist."""
     with _get_connection() as conn:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS candidates (
+CREATE TABLE IF NOT EXISTS candidates (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 name        TEXT    NOT NULL,
                 email       TEXT    NOT NULL,
                 skills      TEXT    DEFAULT '',
                 score       INTEGER DEFAULT 0,
+                ats_score   INTEGER DEFAULT 0,
+                ats_breakdown TEXT DEFAULT '{}',
                 job_recommendations TEXT DEFAULT '[]',
                 created_at  TEXT    DEFAULT (datetime('now'))
             )
@@ -37,16 +39,18 @@ def insert_candidate(
     email: str,
     skills: str,
     score: int,
+    ats_score: int,
+    ats_breakdown: dict,
     job_recommendations: list[dict],
 ) -> int:
     """Insert a new candidate and return the new row id."""
     with _get_connection() as conn:
         cur = conn.execute(
             """
-            INSERT INTO candidates (name, email, skills, score, job_recommendations)
-            VALUES (?, ?, ?, ?, ?)
+INSERT INTO candidates (name, email, skills, score, ats_score, ats_breakdown, job_recommendations)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (name, email, skills, score, json.dumps(job_recommendations)),
+(name, email, skills, score, ats_score, json.dumps(ats_breakdown or {}), json.dumps(job_recommendations)),
         )
         return cur.lastrowid
 
@@ -65,7 +69,9 @@ def get_all_candidates() -> list[dict]:
             "name": row["name"],
             "email": row["email"],
             "skills": row["skills"],
-            "score": row["score"],
+"score": row["score"],
+            "ats_score": row["ats_score"],
+            "ats_breakdown": json.loads(row["ats_breakdown"]) if row["ats_breakdown"] else {}, 
             "job_recommendations": recs,
         })
     return result
